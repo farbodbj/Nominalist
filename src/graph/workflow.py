@@ -25,6 +25,7 @@ class UsernameWorkflow:
         
         # Build the graph
         self.graph: StateGraph = self._build_graph()
+        # self.graph.
     
     def _build_graph(self) -> StateGraph:
         """Build the LangGraph workflow."""
@@ -35,7 +36,14 @@ class UsernameWorkflow:
         graph.add_node("reviewer", self._reviewer_node)
         
         # Add edges
-        graph.add_edge("creator", "reviewer")
+        graph.add_edge("creator", "reviewer")        
+        def reviewer_condition(state: UsernameState) -> str:
+            if state.error:
+                return END
+            if len(state.final_usernames) < 3:
+                return "creator"  
+            return END
+        graph.add_conditional_edges("reviewer", reviewer_condition)
         graph.add_edge("reviewer", END)
         
         # Set entry point
@@ -57,7 +65,7 @@ class UsernameWorkflow:
             if state.error:
                 return {"final_usernames": []}
             
-            final_usernames = self.reviewer_agent.review_and_rank(state.candidate_usernames)
+            final_usernames = self.reviewer_agent.review_and_rank(state.input_name, state.candidate_usernames)
             return {"final_usernames": final_usernames}
         except Exception as e:
             return {"error": f"Reviewer error: {str(e)}"}

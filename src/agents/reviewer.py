@@ -12,7 +12,7 @@ class ReviewerAgent:
         self.db_service = db_service
         self.client = OpenAI(base_url = os.getenv("OPENAI_BASE_URL"))
     
-    def review_and_rank(self, usernames: List[str]) -> List[str]:
+    def review_and_rank(self, input_name: str, usernames: List[str]) -> List[str]:
         """
         Review usernames, filter out existing ones, and return top 3.
         """
@@ -23,7 +23,7 @@ class ReviewerAgent:
             return []
         
         # Use AI to enhance ranking, combined with rule-based scoring
-        ranked_usernames = self._ai_enhanced_ranking(available_usernames)
+        ranked_usernames = self._ai_enhanced_ranking(input_name, available_usernames)
         
         # Return top 3
         return ranked_usernames[:3]
@@ -33,13 +33,13 @@ class ReviewerAgent:
         existing_usernames = self.db_service.check_multiple_usernames(usernames)
         return [u for u in usernames if u.lower() not in existing_usernames]
     
-    def _ai_enhanced_ranking(self, usernames: List[str]) -> List[str]:
+    def _ai_enhanced_ranking(self, input_name: str, usernames: List[str]) -> List[str]:
         """
         Use AI to enhance ranking combined with traditional scoring.
         """
         try:
             # Get AI evaluation
-            ai_rankings = self._get_ai_ranking(usernames)
+            ai_rankings = self._get_ai_ranking(input_name, usernames)
             
             # Get traditional scoring
             traditional_scores = {}
@@ -65,21 +65,22 @@ class ReviewerAgent:
             # Fallback to traditional ranking
             return self._rank_usernames_traditional(usernames)
     
-    def _get_ai_ranking(self, usernames: List[str]) -> dict:
+    def _get_ai_ranking(self, input_name: str, usernames: List[str]) -> dict:
         """Get AI-based ranking of usernames."""
         try:
             usernames_text = '\n'.join([f"{i+1}. {username}" for i, username in enumerate(usernames)])
             
             prompt = f"""
-            Evaluate and score these usernames from 0-100 based on:
+            Evaluate and score these usernames for a given input name from 0-100 based on:
             - Memorability and ease of remembering
             - Professional appearance
             - Ease of typing and pronunciation
             - Uniqueness and creativity
             - Overall appeal for social media/professional use
+            - Alignment with the input name of the user 
             
-            Usernames to evaluate:
-            {usernames_text}
+            Input name: {input_name}
+            Usernames to evaluate: {usernames_text}
             
             Respond with ONLY the scores in this exact format:
             username1: score
