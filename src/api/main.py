@@ -1,5 +1,9 @@
 import dotenv
-dotenv.load_dotenv('../../../.env')
+loaded = dotenv.load_dotenv('.env')
+if loaded:
+    print(".env loaded")
+else:
+    print(".env not found")
 
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel

@@ -6,6 +6,7 @@ from src.agents.creator import CreatorAgent
 from src.agents.reviewer import ReviewerAgent
 from src.services.name_service import NameService
 from src.services.database_service import DatabaseService
+import os
 
 class UsernameState(BaseModel):
     """State model for the username recommendation workflow."""
@@ -16,10 +17,15 @@ class UsernameState(BaseModel):
 
 class UsernameWorkflow:
     """LangGraph workflow for username recommendation."""
-    
+
     def __init__(self):
         self.name_service = NameService()
-        self.db_service = DatabaseService()
+        self.db_service = DatabaseService(
+            host=os.environ["DB_HOST"],
+            user=os.environ["DB_USER"],
+            password=os.environ["DB_PASSWORD"],
+            database=os.environ["DB_NAME"]
+        )
         self.creator_agent = CreatorAgent(self.name_service)
         self.reviewer_agent = ReviewerAgent(self.db_service)
         
